@@ -5,7 +5,12 @@ use std::io::prelude::*;
 
 fn main() {
   
-  let stdin = io::stdin();
-  let checksum = day2::checksum(stdin.lock().lines()).unwrap();
-  println!("Checksum: {}", checksum)
+  let mut spreadsheet = String::new();
+  io::stdin().read_to_string(&mut spreadsheet).unwrap();
+  
+  let checksum = day2::checksum(spreadsheet.as_bytes().lines()).unwrap();
+  println!("Checksum: {}", checksum);
+  
+  let divides = day2::even_divides(spreadsheet.as_bytes().lines()).unwrap();
+  println!("Divides: {}", divides);
 }

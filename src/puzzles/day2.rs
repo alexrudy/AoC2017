@@ -1,5 +1,4 @@
 use std::io;
-
 #[allow(unused_imports)]
 use std::io::prelude::*;
 
@@ -9,6 +8,19 @@ fn checksum_row(row: &[u32]) -> Result<u32, String> {
   let smallest = row.iter().min().ok_or("No minimum!".to_string())?;
   
   return Ok(biggest - smallest)
+}
+
+fn even_divides_row(row: &[u32]) -> Result<u32, String> {
+  for (i, x) in row.iter().enumerate() {
+    for y in row.iter().skip(i + 1) {
+      if (y >= x) && (y % x == 0) {
+        return Ok(y / x);
+      } else if (x >= y) && (x % y == 0) {
+        return Ok(x / y);
+      }
+    }
+  }
+  return Err("No even divisors!".to_string())
 }
 
 /// Turns a string of row numbers into a vector.
@@ -28,6 +40,22 @@ fn checksum_string_row(row: String) -> Result<u32, String> {
   return checksum_row(&row_numbers);
 }
 
+fn even_divides_string_row(row: String) -> Result<u32, String> {
+  let row_numbers = parse_row(row)?;
+  return even_divides_row(&row_numbers);
+}
+
+pub fn even_divides<T: io::BufRead>(lines: io::Lines<T>) -> Result<u32, String> {
+  let mut checksum = 0;
+  for line in lines {
+    match line {
+      Ok(row) => checksum += even_divides_string_row(row)?,
+      Err(err) => return Err(err.to_string())
+    }
+  }
+  return Ok(checksum)
+}
+
 pub fn checksum<T: io::BufRead>(lines: io::Lines<T>) -> Result<u32, String> {
   let mut checksum = 0;
   for line in lines {
@@ -44,12 +72,28 @@ mod tests {
   use super::*;
   
   #[test]
+  fn even_divides_test() {
+    let spreadsheet = "5 9 2 8
+9 4 7 3
+3 8 6 5";
+    assert_eq!(even_divides(spreadsheet.as_bytes().lines()), Ok(9))
+  }
+  
+  #[test]
   fn full_test() {
     let spreadsheet = "5 1 9 5
 7 5 3
 2 4 6 8";
     assert_eq!(checksum(spreadsheet.as_bytes().lines()), Ok(18))
     
+  }
+  
+  #[test]
+  fn full_with_tabs() {
+    let spreadsheet = "5	1	9	5
+    7	5	3
+    2 4	6 8";
+    assert_eq!(checksum(spreadsheet.as_bytes().lines()), Ok(18))
   }
   
   #[test]
