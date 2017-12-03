@@ -4,24 +4,18 @@ use std::io::prelude::*;
 
 use std::fmt;  
 use std;
+use std::error::Error as StdError;
+
+#[allow(non_camel_case_types)]
+type uint = u32;
 
 #[derive(Debug)]
 pub enum Error {  
     NoItemError,
     NoDivisorsError,
+    MultipleDivisorsError((EvenDivide, EvenDivide)),
     IoError(io::Error),
     ParseError(std::num::ParseIntError),
-}
-
-impl fmt::Display for Error {  
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            Error::NoItemError => f.write_str("No Items Found"),
-            Error::NoDivisorsError => f.write_str("No Items could be evenly divided"),
-            Error::IoError(ref e) => e.fmt(f),
-            Error::ParseError(ref e) => e.fmt(f),
-        }
-    }
 }
 
 impl From<io::Error> for Error {
@@ -39,9 +33,10 @@ impl From<std::num::ParseIntError> for Error {
 impl std::error::Error for Error {  
     fn description(&self) -> &str {
         match *self {
-            Error::NoItemError => "No Items Found",
-            Error::NoDivisorsError => "No Items could be evenly divided.",
-            Error::IoError(_) => "An I/O Error Occured",
+            Error::NoItemError => "No Items found",
+            Error::NoDivisorsError => "No Items could be evenly divided",
+            Error::MultipleDivisorsError(_) => "Two divisors found",
+            Error::IoError(_) => "An I/O Error occured",
             Error::ParseError(_) => "Integer parsing error",
         }
     }
@@ -56,71 +51,108 @@ impl std::error::Error for Error {
 
 }
 
+impl fmt::Display for Error {  
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            Error::NoItemError => f.write_str(self.description()),
+            Error::NoDivisorsError => f.write_str(self.description()),
+            Error::MultipleDivisorsError((ref a, ref b)) => f.write_str(&format!("{}: {}/{} and {}/{}", self.description(), a.numerator, a.denominator, b.numerator, b.denominator)),
+            Error::IoError(ref e) => e.fmt(f),
+            Error::ParseError(ref e) => e.fmt(f),
+        }
+    }
+}
+
 type Result<T> = std::result::Result<T, Error>;
 
 /// Checksums a single spreadsheet row.
-fn checksum_row(row: &[u32]) -> Result<u32> {
+fn checksum_row(row: &[uint]) -> Result<uint> {
   let biggest = row.iter().max().ok_or(Error::NoItemError)?;
   let smallest = row.iter().min().ok_or(Error::NoItemError)?;
   
   return Ok(biggest - smallest)
 }
 
-fn even_divides_row(row: &[u32]) -> Result<u32> {
+#[derive(Debug)]
+pub struct EvenDivide {
+  numerator : uint,
+  denominator : uint,
+}
+
+impl EvenDivide {
+  fn get(&self) -> uint {
+    return self.numerator / self.denominator
+  }
+  
+  fn new(numerator: uint, denominator: uint) -> EvenDivide {
+    EvenDivide { numerator: numerator, denominator: denominator }
+  }
+  
+}
+
+/// Computes the one even divide pair in a row.
+fn even_divides_row(row: &[uint]) -> Result<uint> {
+  
+  let mut result = None;
   for (i, x) in row.iter().enumerate() {
     for y in row.iter().skip(i + 1) {
+      let mut r = None;
       if (y >= x) && (y % x == 0) {
-        return Ok(y / x);
+        r = Some(EvenDivide::new(*y, *x));
       } else if (x >= y) && (x % y == 0) {
-        return Ok(x / y);
+        r = Some(EvenDivide::new(*x, *y));
+      }
+      
+      result = match (r, result) {
+        (Some(this_result), None) => Some(this_result),
+        (Some(this_result), Some(prev_result)) => {
+          return Err(Error::MultipleDivisorsError((this_result, prev_result)))
+        },
+        (None, rv) => {rv},
       }
     }
   }
-  return Err(Error::NoDivisorsError)
+  match result {
+    Some(rv) => Ok(rv.get()),
+    None => Err(Error::NoDivisorsError)
+  }
 }
 
 /// Turns a string of row numbers into a vector.
-fn parse_row(row: &String) -> Result<Vec<u32>> {
-  let mut row_numbers : Vec<u32> = Vec::new();
+fn parse_row(row: &String) -> Result<Vec<uint>> {
+  let mut row_numbers : Vec<uint> = Vec::new();
   for number in row.trim().split(char::is_whitespace) {
-    row_numbers.push(number.parse::<u32>()?)
+    row_numbers.push(number.parse::<uint>()?)
   }
   return Ok(row_numbers)
 }
 
-fn checksum_string_row(row: &String) -> Result<u32> {
-  let row_numbers = parse_row(row)?;
-  return checksum_row(&row_numbers);
-}
-
-fn even_divides_string_row(row: &String) -> Result<u32> {
-  let row_numbers = parse_row(row)?;
-  return even_divides_row(&row_numbers);
-}
-
-pub fn even_divides<T: io::BufRead>(lines: io::Lines<T>) -> Result<u32> {
+/// Returns the sum of even divisors for a lines of numbers.
+pub fn even_divides<T: io::BufRead>(lines: io::Lines<T>) -> Result<uint> {
   let mut checksum = 0;
   for line in lines {
-    checksum += even_divides_string_row(&(line?))?
+    checksum += even_divides_row(&parse_row(&(line?))?)?
   }
   return Ok(checksum)
 }
 
-pub fn checksum<T: io::BufRead>(lines: io::Lines<T>) -> Result<u32> {
+/// Returns the sum of difference of largest and smallest numbers on lines.
+pub fn checksum<T: io::BufRead>(lines: io::Lines<T>) -> Result<uint> {
   let mut checksum = 0;
   for line in lines {
-    checksum += checksum_string_row(&(line?))?
+    checksum += checksum_row(&parse_row(&(line?))?)?
   }
   return Ok(checksum)
 }
 
-pub fn even_divides_and_checksum<T: io::BufRead>(lines: io::Lines<T>) -> Result<(u32, u32)> {
+/// Completes both the original checksum and the even divides checksum on a series of rows.
+pub fn even_divides_and_checksum<T: io::BufRead>(lines: io::Lines<T>) -> Result<(uint, uint)> {
   let mut checksum = 0;
   let mut divides = 0;
   for line in lines {
-    let row = line?;
-    checksum += checksum_string_row(&row)?;
-    divides += even_divides_string_row(&row)?;
+    let row = parse_row(&(line?))?;
+    checksum += checksum_row(&row)?;
+    divides += even_divides_row(&row)?;
   }
   return Ok((checksum, divides))
 }
