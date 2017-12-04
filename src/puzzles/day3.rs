@@ -38,7 +38,7 @@ pub fn first_large_value(position: uint) -> Result<uint, String> {
   let mut grid : HashMap<MemoryPosition, uint> = HashMap::new();
   let mut pos = MemoryPosition { x: 0, y: 0};
   grid.insert(pos, 1);
-  for _i in 1..position {
+  for _i in 1.. {
     pos = pos.shift(dd.0, dd.1);
     let val = neighbor_sum(&pos, &grid)?;
     grid.insert(pos, val);
