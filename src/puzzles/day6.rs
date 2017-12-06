@@ -12,17 +12,15 @@ fn reallocate_memory(memory_bank: &mut Vec<usize>) {
   }
 }
 
-pub fn reallocate_many(memory_bank: &mut Vec<usize>) -> (u32, u32) {
+pub fn reallocate_many(mut memory_bank: Vec<usize>) -> (u32, u32) {
   let mut seen = HashMap::new();
   let mut nsteps : u32 = 0;
-  let mut memory_state : String = memory_bank.iter().map(|x| x.to_string() + ",").collect();
-  while !seen.contains_key(&memory_state) {
-    seen.insert(memory_state.clone(), nsteps);
-    reallocate_memory(memory_bank);
-    memory_state = memory_bank.iter().map(|x| x.to_string() + ",").collect();
+  while !seen.contains_key(&memory_bank) {
+    seen.insert(memory_bank.clone(), nsteps);
+    reallocate_memory(&mut memory_bank);
     nsteps += 1;
   }
-  (nsteps, nsteps - seen.get(&memory_state).unwrap())
+  (nsteps, nsteps - seen.get(&memory_bank).unwrap())
 }
 
 #[cfg(test)]
@@ -38,8 +36,8 @@ mod tests {
   
   #[test]
   fn memory_move_many() {
-    let mut memory = vec![0, 2, 7, 0];
-    assert_eq!(reallocate_many(&mut memory), 5);
+    let memory = vec![0, 2, 7, 0];
+    assert_eq!(reallocate_many(memory), (5, 4));
   }
   
 }
