@@ -10,9 +10,8 @@ fn main() {
   let mut maxval = None;
   for line in stdin.lock().lines() {
     let instruction = day8::Instruction::parse(&line.unwrap()).unwrap();
-    {
-      instruction.execute(&mut registers);
-    }
+    instruction.execute(&mut registers);
+    
     let thismax = registers.values().max().unwrap().clone();
     maxval = match maxval {
       None => Some(thismax),
