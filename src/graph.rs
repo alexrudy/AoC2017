@@ -87,16 +87,21 @@ impl<'a, T> Iterator for NodeIterator<'a, T> {
 
 impl Node {
   
-  pub fn add_children<T>(self, children: &[Node], graph: &mut Graph<T>) -> Result<(), GraphError> {
+  pub fn append<T>(&self, node: &Node, graph: &mut Graph<T>) -> Result<(), GraphError> {
+    {
+      let node_container = &mut graph.nodes[node.index];
+      node_container.parent = Some(*self);
+    }
+    {
+      let self_container = &mut graph.nodes[self.index];
+      self_container.children.push(*node);        
+    }
+    Ok(())
+  }
+  
+  pub fn add_children<T>(&self, children: &[Node], graph: &mut Graph<T>) -> Result<(), GraphError> {
     for node in children.iter() {
-      {
-        let node_container = &mut graph.nodes[node.index];
-        node_container.parent = Some(self);
-      }
-      {
-        let self_container = &mut graph.nodes[self.index];
-        self_container.children.push(*node);        
-      }
+      self.append(node, graph)?
     }
     Ok(())
   }
@@ -146,6 +151,10 @@ impl<T> Graph<T> {
       graph: self,
       index: 0,
     }
+  }
+  
+  pub fn len(&self) -> usize {
+    self.nodes.len()
   }
   
   pub fn find_root(&self) -> Option<Node> {
