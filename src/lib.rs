@@ -1,5 +1,10 @@
 #![feature(slice_rotate)]
 
+/// Tools for working with Hexagons
+mod hexagons;
 
-pub mod puzzles;
+/// Tools for working with arbitrary graphs
 pub mod graph;
+
+/// The puzzles module contains general puzzle solutions.
+pub mod puzzles;
