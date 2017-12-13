@@ -116,7 +116,6 @@ impl<'a, T> NodeSearchIterator<'a, T> {
 }
 
 impl<'a, T> Iterator for NodeSearchIterator<'a, T>
-  where T: fmt::Debug
 {
   type Item = Node;
   
@@ -214,11 +213,28 @@ impl<T> Graph<T> {
     self.nodes.len()
   }
   
-  pub fn find_root(&self) -> Option<Node> {
+  pub fn count_groups(&self) -> usize {
+    let mut ngroups = 0;
+    let mut seen : HashSet<Node> = HashSet::new();
+    for node in self.iter() {
+      if !seen.contains(&node) {
+        ngroups += 1;
+        seen.insert(node);
+        for cnode in node.connected(self) {
+          seen.insert(cnode);
+        }
+      }
+    }
+    ngroups
+  }
+  
+  
+  /// Finds the root node, but assumes all nodes are connected.
+  pub fn root(&self) -> Option<Node> {
     self.first().and_then(|x| x.ancestors(self).last())
   }
   
-  pub fn new_node(&mut self, data: T) -> Node {
+  pub fn node(&mut self, data: T) -> Node {
     
     let index = self.nodes.len();
     
@@ -243,7 +259,7 @@ mod tests {
   #[test]
   fn create_graph() {
     let mut g : Graph<String> = Graph::new();
-    let node = g.new_node("Hello".to_string());
+    let node = g.node("Hello".to_string());
     assert_eq!(g.get_data(&node), "Hello")
   }
   

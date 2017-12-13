@@ -10,7 +10,7 @@ fn main() {
   let mut programs : graph::Graph<day7::Program> = graph::Graph::new();
   programs.parse_nodes(stdin.lock().lines()).unwrap();
   
-  let root = programs.find_root().map(|x| programs.get_data(&x)).unwrap();
+  let root = programs.root().map(|x| programs.get_data(&x)).unwrap();
   println!("Root node is: {}", root.name);
   
   for node in programs.iter() {

@@ -26,7 +26,7 @@ impl graph::Graph<Program> {
       weight_text[1..wsize].parse::<u32>().unwrap()
     };
     
-    let node = self.new_node(Program { name: name, weight: weight });
+    let node = self.node(Program { name: name, weight: weight });
     
     let arrow = parts.next();
     let mut children = Vec::new();
@@ -165,7 +165,7 @@ mod tests {
     g.parse_nodes(program_input.as_bytes().lines()).unwrap();
     
     let node_expecterd = Program { name : "tknk".to_string(), weight: 41};
-    assert_eq!(g.find_root().map(|x| g.get_data(&x)), Some(&node_expecterd));
+    assert_eq!(g.root().map(|x| g.get_data(&x)), Some(&node_expecterd));
   }
   
   #[test]
@@ -215,11 +215,5 @@ mod tests {
     
   }
   
-  // #[test]
-  // fn parse_short_program_test() {
-  //   let text = "ktlj (57)";
-  //   let (prog, children) = Program::parse(text).unwrap();
-  //   assert_eq!(prog, Program::new("ktlj".to_string(), 57));
-  //   assert_eq!(children, Vec::<String>::new());
-  // }
+  
 }
