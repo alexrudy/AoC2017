@@ -1,6 +1,8 @@
 use std::fmt;
 use std::error;
 use std::num;
+use std::collections::VecDeque;
+use std::collections::HashSet;
 
 #[derive(Debug)]
 pub enum GraphError { 
@@ -85,6 +87,57 @@ impl<'a, T> Iterator for NodeIterator<'a, T> {
   }
 }
 
+pub struct NodeSearchIterator<'a, T: 'a> {
+  graph: &'a Graph<T>,
+  seen: HashSet<usize>,
+  queue: VecDeque<usize>,
+  index: Option<usize>,
+}
+
+impl<'a, T> NodeSearchIterator<'a, T> {
+  
+  fn new(index: usize, graph: &'a Graph<T>) -> NodeSearchIterator<'a, T> {
+    let mut iter = NodeSearchIterator {
+      graph: graph,
+      seen: HashSet::new(),
+      queue: VecDeque::new(),
+      index: Some(index),
+    };
+    iter.seen.insert(index);
+    return iter
+  }
+  
+  fn check(&mut self, index: usize) {
+    if !self.seen.contains(&index) {
+      self.seen.insert(index);
+      self.queue.push_back(index);
+    }
+  }  
+}
+
+impl<'a, T> Iterator for NodeSearchIterator<'a, T>
+  where T: fmt::Debug
+{
+  type Item = Node;
+  
+  fn next(&mut self) -> Option<Node> {
+    match self.index {
+      None => None,
+      Some(index) => {
+        let node = Node { index: index };
+        if let Some(pnode) = node.parent(self.graph) {
+          self.check(pnode.index)
+        }
+        for child in node.children(self.graph) {
+          self.check(child.index)
+        }
+        self.index = self.queue.pop_front();
+        return Some(node)
+      }
+    }
+  }
+}
+
 impl Node {
   
   pub fn append<T>(&self, node: &Node, graph: &mut Graph<T>) -> Result<(), GraphError> {
@@ -119,6 +172,10 @@ impl Node {
   
   pub fn parent<T>(self, graph: &Graph<T>) -> Option<Node> {
     graph.nodes[self.index].parent
+  }
+  
+  pub fn connected<T>(self, graph: &Graph<T>) -> NodeSearchIterator<T> {
+    NodeSearchIterator::new(self.index, graph)
   }
 }
 
@@ -176,4 +233,18 @@ impl<T> Graph<T> {
     Node { index : index }
   }
 
+}
+
+#[cfg(test)]
+mod tests {
+  
+  use super::*;
+  
+  #[test]
+  fn create_graph() {
+    let mut g : Graph<String> = Graph::new();
+    let node = g.new_node("Hello".to_string());
+    assert_eq!(g.get_data(&node), "Hello")
+  }
+  
 }
