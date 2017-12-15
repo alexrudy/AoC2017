@@ -8,3 +8,6 @@ pub mod graph;
 
 /// The puzzles module contains general puzzle solutions.
 pub mod puzzles;
+
+// Knot hashes
+pub mod knot;
