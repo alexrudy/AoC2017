@@ -27,6 +27,11 @@ impl Knot {
     return &self.hash
   }
   
+  pub fn bindigest(&self) -> String {
+    self.hash.chunks(16).map(|chunk| chunk.iter().fold(0, | acc, &x | acc ^ x))
+                   .map(|x| format!("{:08b}", x)).collect()
+  }
+  
   pub fn hexdigest(&self) -> String {
     self.hash.chunks(16).map(|chunk| chunk.iter().fold(0, | acc, &x | acc ^ x))
                    .map(|x| format!("{:02x}", x)).collect()
