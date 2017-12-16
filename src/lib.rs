@@ -1,4 +1,7 @@
 #![feature(slice_rotate)]
+#![feature(test)]
+
+extern crate test;
 
 /// Tools for working with Hexagons
 mod hexagons;
