@@ -4,11 +4,11 @@ use std::collections::HashMap;
 use std::str;
 
 #[derive(Debug, PartialEq, Eq, Clone)]
-pub struct Registers<'k, T>
+pub struct Registers<T>
 where
     T: Copy + Clone,
 {
-    values: HashMap<&'k str, T>,
+    values: HashMap<String, T>,
     default: T,
 }
 
@@ -33,30 +33,30 @@ where
     }
 }
 
-impl<'k, T> Registers<'k, T>
+impl<T> Registers<T>
 where
     T: str::FromStr + Copy + Clone,
 {
-    pub fn new(default: T) -> Registers<'k, T> {
+    pub fn new(default: T) -> Registers<T> {
         Registers {
             values: HashMap::new(),
             default: default,
         }
     }
-    pub fn hmap(&self) -> &HashMap<&'k str, T> {
+    pub fn hmap(&self) -> &HashMap<String, T> {
       return &self.values
     }
     
-    pub fn get_mut<>(&mut self, argument: &Argument<'k, T>) -> Option<&mut T> {
+    pub fn get_mut(&mut self, argument: &Argument<T>) -> Option<&mut T> {
         match argument {
-            &Argument::Register(ref s) => Some(self.values.entry(s).or_insert(self.default)),
+            &Argument::Register(ref s) => Some(self.values.entry(s.to_string()).or_insert(self.default)),
             &Argument::Value(_) => None,
         }
     }
 
-    pub fn get<'a>(&'a self, argument: &'k Argument<'k, T>) -> T {
+    pub fn get(&self, argument: &Argument<T>) -> T {
         match *argument {
-            Argument::Register(ref s) => *self.values.get(s).unwrap_or(&self.default),
+            Argument::Register(ref s) => *self.values.get(&s.to_string()).unwrap_or(&self.default),
             Argument::Value(v) => v,
         }
     }
@@ -85,7 +85,7 @@ mod test {
     assert_eq!(registry.get(&arg), 0);
   }
   
-  fn execute_command<'b, 'a: 'b + 'c, 'c>(registry: &mut Registers<'b, i32>, condition: &'a Argument<'a, i32>, destination: &Argument<'a, i32>) {
+  fn execute_command(registry: &mut Registers<i32>, condition: &Argument<i32>, destination: &Argument<i32>) {
     if registry.get(condition) > 0 {
       let dest = registry.get_mut(destination).unwrap();
       *dest += 1;
