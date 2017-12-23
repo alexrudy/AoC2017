@@ -53,14 +53,14 @@ where
     
     pub fn get_mut(&mut self, argument: &Argument<T>) -> Option<&mut T> {
         match argument {
-            &Argument::Register(ref s) => Some(self.values.entry(s.to_string()).or_insert(self.default)),
+            &Argument::Register(s) => Some(self.values.entry(s.to_string()).or_insert(self.default)),
             &Argument::Value(_) => None,
         }
     }
 
     pub fn get(&self, argument: &Argument<T>) -> T {
         match *argument {
-            Argument::Register(ref s) => *self.values.get(&s.to_string()).unwrap_or(&self.default),
+            Argument::Register(s) => *self.values.get(s).unwrap_or(&self.default),
             Argument::Value(v) => v,
         }
     }
