@@ -3,6 +3,10 @@
 use std::collections::HashMap;
 use std::str;
 
+
+// Registers key on String so that their keys
+// are not tied in lifetime to the arguments
+// which create the keys.
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Registers<T>
 where
