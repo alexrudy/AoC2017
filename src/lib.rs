@@ -14,3 +14,6 @@ pub mod puzzles;
 
 // Knot hashes
 pub mod knot;
+
+// Virtual machines
+pub mod vm;
