@@ -38,6 +38,6 @@ mod test {
   #[test]
   fn small_lock() {
     let locked = spinlock(2018, 3);
-    assert_eq!(getnextitem(&locked), 638);
+    assert_eq!(getnextitem(&locked, 2018), 638);
   }
 }
