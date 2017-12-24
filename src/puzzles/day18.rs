@@ -1,36 +1,13 @@
 use super::super::vm;
 use std::str;
+use std::sync::mpsc::{channel, Sender, Receiver};
+use std::sync::{Arc, Mutex, Condvar};
+use std::thread;
 
 #[allow(non_camel_case_types)]
 type int = isize;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct Progression {
-  step: isize,
-  sound: Option<int>,
-}
-
-impl Progression {
-  fn new(step: isize, sound: Option<int>) -> Progression {
-    Progression { step, sound }
-  }
-  
-  fn step() -> Progression {
-    Progression{ step:1, sound:None }
-  }
-  
-  fn jump(step: isize) -> Progression {
-    Progression{ step:step, sound:None }
-  }
-  
-  fn sound(&self) -> Option<int> {
-    self.sound
-  }
-  
-  fn get(&self) -> isize {
-    self.step
-  }
-}
+type Progression = Option<isize>;
 
 /// A structure to hold pairs of arguments
 /// for commands which accept two arguments.
@@ -86,72 +63,149 @@ impl<'a> Command<'a> {
   
 }
 
+type Counter = Arc<(Mutex<int>, Condvar)>;
+
 /// The actual computer component
-#[derive(Debug, PartialEq, Eq, Clone)]
-struct Transmitter {
+#[derive(Debug)]
+pub struct Transmitter {
   registers: vm::Registers<int>,
-  sound: Option<int>
+  output: Sender<int>,
+  input: Receiver<int>,
+  qsize: Counter, // Counter of the total queue size?
+  sends: usize,
+  ident: usize,
 }
 
 impl Transmitter {
   
-  fn new() -> Transmitter {
+  fn counter(n: int) -> Counter {
+    Arc::new((Mutex::new(n), Condvar::new()))
+  }
+  
+  fn single() -> (Transmitter, Sender<int>, Receiver<int>, Counter) {
+    
+    let (tx, input) = channel();
+    let (output, rx) = channel();
+    let qsize = Transmitter::counter(1);
+    (Transmitter {
+      registers: vm::Registers::new(0),
+      output: output,
+      input: input,
+      qsize: qsize.clone(),
+      sends: 0,
+      ident: 0,
+    }, tx, rx, qsize.clone())
+  }
+  
+  fn new(output: Sender<int>, input: Receiver<int>, qsize: Counter, ident: usize) -> Transmitter {
     Transmitter {
       registers: vm::Registers::new(0),
-      sound: None
+      output: output,
+      input: input,
+      qsize: qsize,
+      sends: 0,
+      ident: ident,
     }
   }
   
   fn snd(&mut self, arg: &vm::Argument<int>) -> Progression {
     let value = self.registers.get(arg);
-    self.sound = Some(value);
-    Progression::step()
+    self.output.send(value).expect("Send to ouptut?");
+    
+    {
+      let _nworking = self.qsize.0.lock().unwrap();
+      // eprintln!("SND: {}", *nworking);
+      {
+        self.qsize.1.notify_all();
+      }
+    }
+    self.sends += 1;
+    Some(1)
   }
   
   fn set(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target = value;
-    Progression::step()
+    Some(1)
   }
   
   fn add(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target += value;
-    Progression::step()
+    Some(1)
   }
   
   fn mul(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target *= value;
-    Progression::step()
+    Some(1)
   }
   
   fn mod_(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target = *target % value;
-    Progression::step()
+    Some(1)
   }
   
-  fn rcv(&self, arg: &vm::Argument<int>) -> Progression {
-    if self.registers.get(arg) > 0 {
-      Progression::new(1, self.sound)
-    } else {
-      Progression::step()
+  fn rcv(&mut self, arg: &vm::Argument<int>) -> Progression {
+    
+    let mut nworking = self.qsize.0.lock().unwrap();
+    *nworking -= 1;
+    
+    // eprintln!("{} RCV: {}",self.ident, *nworking);
+    
+    // Try recieving at least once.
+    match self.input.try_recv() {
+      Ok(value) => {
+        let target = self.registers.get_mut(&arg).expect("Requires a register!");
+        *target = value;
+        *nworking += 1;
+        return Some(1);
+      },
+      Err(_) => {}
     }
+    
+    
+    while *nworking > 0 {
+      match self.input.try_recv() {
+        Ok(value) => {
+            let target = self.registers.get_mut(&arg).expect("Requires a register!");
+            *target = value;
+            *nworking += 1;
+            return Some(1);
+          }
+        Err(_) => {
+          // eprintln!("{} Deadlock! {}", self.ident, *nworking);
+          nworking = self.qsize.1.wait(nworking).unwrap();
+          }
+        };
+    };
+    // eprintln!("{} Ending after deadlock: {} {}",self.ident, *nworking, self.sends());
+    *nworking += 1;
+    None
   }
   
   fn jgz(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get(&args.target);
     if target > 0 {
-      Progression::jump(value)
+      Some(value)
     } else {
-      Progression::step()
+      Some(1)
     }
+  }
+  
+  /// Close the program, letting others know that this program is done.
+  fn close(&mut self) {
+    {
+      let mut nworking = self.qsize.0.lock().unwrap();
+      *nworking -= 1;
+    }
+    self.qsize.1.notify_all();
   }
   
   /// Execute the command, and return the offset for the next position
@@ -168,11 +222,16 @@ impl Transmitter {
     
   }
   
+  pub fn sends(&self) -> usize {
+    self.sends
+  }
+  
 }
 
 pub struct TransmissionIterator<'a> {
   commands: Vec<Command<'a>>,
   transmitter: Transmitter,
+  watchers: Option<(Sender<int>,Receiver<int>)>,
   position: Option<isize>
 }
 
@@ -185,27 +244,60 @@ impl<'a> Iterator for TransmissionIterator<'a> {
       
       // Step through progress until we are 
       let mut nextpos = pos;
+      
+      // Grab the last sound emitted;
+      let mut sound = None;
+      
       loop {
         
         // Step to the next position
-        let progress = self.transmitter.execute(&self.commands[nextpos as usize]);
-        nextpos += progress.get();
-        
-        // We've ended the program, 
-        // note this fact, then return the sound
-        if !((0 <= nextpos) & (nextpos < self.commands.len() as isize)) {
-          self.position = None;
-          return progress.sound();
-        }
-        
-        // Check if we should yield a sound
-        if progress.sound().is_some() {
-          self.position = Some(nextpos);
-          return progress.sound();
+        // eprintln!("{} {:?}", nextpos, self.commands[nextpos as usize]);
+        match self.transmitter.execute(&self.commands[nextpos as usize]) {
+          Some(progress) => {
+            nextpos += progress;
+          
+            // If we are watching, then watch.
+            if let Some((ref wtx, ref wrx)) = self.watchers {
+              if let Ok(value) = wrx.try_recv() {
+                sound = Some(value);
+                wtx.send(value).unwrap();
+              }
+            }
+          
+            // We've ended the program, 
+            // note this fact!
+            if !((0 <= nextpos) & (nextpos < self.commands.len() as isize)) {
+              self.position = None;
+              self.transmitter.close();
+              return None;
+            }
+          
+            // If we are watching, emit sounds.
+            if self.watchers.is_some() {
+              // Get the most recent sound emitted. Skip rcv.
+              if let Command::Rcv(ref arg) = self.commands[nextpos as usize] {
+                nextpos += 1;
+                if self.transmitter.registers.get(arg) > 0 {
+                  self.position = Some(nextpos);
+                  return sound;
+                }
+              }
+            } else {
+              self.position = Some(nextpos);
+              return Some(self.transmitter.sends() as isize);
+            }
+          }
+          None => {
+            // When progress is none
+            self.position = None;
+            self.transmitter.close();
+            return None;
+          }
         }
       }
     } else {
       // Program has expired, signal that we are done.
+      self.transmitter.close();
       return None;
     }
   }
@@ -213,18 +305,60 @@ impl<'a> Iterator for TransmissionIterator<'a> {
 
 pub fn run_program<'a>(program: &'a str) -> TransmissionIterator<'a> {
   let commands = program.lines().map(|x| Command::parse(x)).collect();
+  
+  let (transmitter, ty, rx, _counter) = Transmitter::single();
   TransmissionIterator {
     commands: commands,
-    transmitter: Transmitter::new(),
+    transmitter: transmitter,
+    watchers: Some((ty, rx)),
     position: Some(0),
   }
+}
+
+pub fn run_unwatched_program<'a>(program: &'a str, transmitter: Transmitter) -> TransmissionIterator<'a> {
+  let commands = program.lines().map(|x| Command::parse(x)).collect();
+  TransmissionIterator {
+    commands: commands,
+    transmitter: transmitter,
+    watchers: None,
+    position: Some(0),
+  }
+}
+
+pub fn run_pair(program: &str) -> (usize, usize) {
+  
+  let (ta, ra) = channel();
+  let (tb, rb) = channel();
+  let qsize = Transmitter::counter(2);
+  
+  let mut a = Transmitter::new(ta, rb, qsize.clone(), 0);
+  a.execute(&Command::parse("set p 0"));
+  let pa = program.to_string();
+  let mut b = Transmitter::new(tb, ra, qsize.clone(), 1);
+  b.execute(&Command::parse("set p 1"));
+  let pb = program.to_string();
+  
+  
+  let ta = thread::spawn(move|| {
+    run_unwatched_program(&pa, a).last().unwrap()
+  });
+  let tb = thread::spawn(move|| {
+    run_unwatched_program(&pb, b).last().unwrap()
+  });
+  
+  let sa = ta.join().unwrap() as usize;
+  let sb = tb.join().unwrap() as usize;
+  
+  (sa, sb)
 }
 
 #[cfg(test)]
 mod test {
   
   use super::*;
-  
+  use std::fs::File;
+  use std::io::Read;
+    
   #[test]
   fn test_parse_commands() {
     let cmd = Command::parse("snd a");
@@ -237,25 +371,24 @@ mod test {
   
   #[test]
   fn test_execute_commands() {
-    let mut transmitter = Transmitter::new();
+    
+    let (mut transmitter, _ty, rx, _counter) = Transmitter::single();
+    
     let p = transmitter.execute(&Command::parse("snd a"));
-    assert_eq!(p, Progression::new(1, None));
+    assert_eq!(p, Some(1));
     let p = transmitter.execute(&Command::parse("set a 10"));
-    assert_eq!(p, Progression::new(1, None));
-    let p = transmitter.execute(&Command::parse("rcv 1"));
-    assert_eq!(p, Progression::new(1, Some(0)));
+    assert_eq!(p, Some(1));
     let p = transmitter.execute(&Command::parse("add a 1"));
-    assert_eq!(p, Progression::new(1, None));
+    assert_eq!(p, Some(1));
     let p = transmitter.execute(&Command::parse("mul b 2"));
-    assert_eq!(p, Progression::new(1, None));
+    assert_eq!(p, Some(1));
     let p = transmitter.execute(&Command::parse("mod a 10"));
-    assert_eq!(p, Progression::new(1, None));
+    assert_eq!(p, Some(1));
     let p = transmitter.execute(&Command::parse("jgz a 10"));
-    assert_eq!(p, Progression::new(10, None));
+    assert_eq!(p, Some(10));
     let p = transmitter.execute(&Command::parse("snd a"));
-    assert_eq!(p, Progression::new(1, None));
-    let p = transmitter.execute(&Command::parse("rcv 1"));
-    assert_eq!(p, Progression::new(1, Some(1)));
+    assert_eq!(p, Some(1));
+    assert_eq!(rx.recv(), Ok(0));
   }
   
   #[test]
@@ -271,6 +404,37 @@ jgz a -1
 set a 1
 jgz a -2";
     assert_eq!(run_program(&program).take(1).next(), Some(4));
+  }
+  
+  #[test]
+  fn test_part_one () {
+    let mut program = String::new();
+    let mut f = File::open("puzzles/18/input.txt").expect("file not found");
+    f.read_to_string(&mut program).expect("Read failure!");
+    assert_eq!(run_program(&program).take(1).next(), Some(2951));
+  }
+  
+  #[test]
+  fn test_part_two () {
+    let mut program = String::new();
+    let mut f = File::open("puzzles/18/input.txt").expect("file not found");
+    f.read_to_string(&mut program).expect("Read failure!");
+    assert_eq!(run_pair(&program).1, 7366);
+  }
+  
+  #[test]
+  fn test_pair_program() {
+    let program = "snd 1
+snd 2
+snd p
+rcv a
+rcv b
+rcv c
+rcv d";
+    let (a, b) = run_pair(&program);
+    assert_eq!(a, 3);
+    assert_eq!(b, 3);
+    
   }
   
 }

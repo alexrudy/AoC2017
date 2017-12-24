@@ -13,5 +13,6 @@ fn main() {
     None => println!("No sound emitted!")
   };
   
-  
+  let (a, b) = day18::run_pair(&program);
+  println!("a: {} b: {}", a, b)
 }
