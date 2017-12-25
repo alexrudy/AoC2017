@@ -7,7 +7,7 @@ use std::thread;
 #[allow(non_camel_case_types)]
 type int = isize;
 
-type Progression = Option<isize>;
+type Progression = Result<isize, String>;
 
 /// A structure to hold pairs of arguments
 /// for commands which accept two arguments.
@@ -120,35 +120,35 @@ impl Transmitter {
       }
     }
     self.sends += 1;
-    Some(1)
+    Ok(1)
   }
   
   fn set(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target = value;
-    Some(1)
+    Ok(1)
   }
   
   fn add(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target += value;
-    Some(1)
+    Ok(1)
   }
   
   fn mul(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target *= value;
-    Some(1)
+    Ok(1)
   }
   
   fn mod_(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get_mut(&args.target).expect("Requires a register!");
     *target = *target % value;
-    Some(1)
+    Ok(1)
   }
   
   fn rcv(&mut self, arg: &vm::Argument<int>) -> Progression {
@@ -159,15 +159,23 @@ impl Transmitter {
     // eprintln!("{} RCV: {}",self.ident, *nworking);
     
     // Try recieving at least once.
-    match self.input.try_recv() {
+    let r = match self.input.try_recv() {
       Ok(value) => {
         let target = self.registers.get_mut(&arg).expect("Requires a register!");
         *target = value;
+        Ok(1)
+      },
+      Err(_) => {Err("Queue was empty".to_string())}
+    };
+    
+    
+    match r {
+      Ok(value) => {
         *nworking += 1;
-        return Some(1);
+        return Ok(value);
       },
       Err(_) => {}
-    }
+    };
     
     
     while *nworking > 0 {
@@ -176,7 +184,7 @@ impl Transmitter {
             let target = self.registers.get_mut(&arg).expect("Requires a register!");
             *target = value;
             *nworking += 1;
-            return Some(1);
+            return Ok(1);
           }
         Err(_) => {
           // eprintln!("{} Deadlock! {}", self.ident, *nworking);
@@ -184,18 +192,18 @@ impl Transmitter {
           }
         };
     };
-    // eprintln!("{} Ending after deadlock: {} {}",self.ident, *nworking, self.sends());
-    *nworking += 1;
-    None
+    // println!("{} Ending after deadlock: {} {}",self.ident, *nworking, self.sends());
+    self.qsize.1.notify_all();
+    Err(format!("Deadlock Program:{} No workers remain.", self.ident))
   }
   
   fn jgz(&mut self, args: &Arguments<int>) -> Progression {
     let value = self.registers.get(&args.argument);
     let target = self.registers.get(&args.target);
     if target > 0 {
-      Some(value)
+      Ok(value)
     } else {
-      Some(1)
+      Ok(1)
     }
   }
   
@@ -253,7 +261,7 @@ impl<'a> Iterator for TransmissionIterator<'a> {
         // Step to the next position
         // eprintln!("{} {:?}", nextpos, self.commands[nextpos as usize]);
         match self.transmitter.execute(&self.commands[nextpos as usize]) {
-          Some(progress) => {
+          Ok(progress) => {
             nextpos += progress;
           
             // If we are watching, then watch.
@@ -287,10 +295,9 @@ impl<'a> Iterator for TransmissionIterator<'a> {
               return Some(self.transmitter.sends() as isize);
             }
           }
-          None => {
+          Err(_) => {
             // When progress is none
             self.position = None;
-            self.transmitter.close();
             return None;
           }
         }
@@ -332,10 +339,10 @@ pub fn run_pair(program: &str) -> (usize, usize) {
   let qsize = Transmitter::counter(2);
   
   let mut a = Transmitter::new(ta, rb, qsize.clone(), 0);
-  a.execute(&Command::parse("set p 0"));
+  a.execute(&Command::parse("set p 0")).unwrap();
   let pa = program.to_string();
   let mut b = Transmitter::new(tb, ra, qsize.clone(), 1);
-  b.execute(&Command::parse("set p 1"));
+  b.execute(&Command::parse("set p 1")).unwrap();
   let pb = program.to_string();
   
   
@@ -375,19 +382,19 @@ mod test {
     let (mut transmitter, _ty, rx, _counter) = Transmitter::single();
     
     let p = transmitter.execute(&Command::parse("snd a"));
-    assert_eq!(p, Some(1));
+    assert_eq!(p, Ok(1));
     let p = transmitter.execute(&Command::parse("set a 10"));
-    assert_eq!(p, Some(1));
+    assert_eq!(p, Ok(1));
     let p = transmitter.execute(&Command::parse("add a 1"));
-    assert_eq!(p, Some(1));
+    assert_eq!(p, Ok(1));
     let p = transmitter.execute(&Command::parse("mul b 2"));
-    assert_eq!(p, Some(1));
+    assert_eq!(p, Ok(1));
     let p = transmitter.execute(&Command::parse("mod a 10"));
-    assert_eq!(p, Some(1));
+    assert_eq!(p, Ok(1));
     let p = transmitter.execute(&Command::parse("jgz a 10"));
-    assert_eq!(p, Some(10));
+    assert_eq!(p, Ok(10));
     let p = transmitter.execute(&Command::parse("snd a"));
-    assert_eq!(p, Some(1));
+    assert_eq!(p, Ok(1));
     assert_eq!(rx.recv(), Ok(0));
   }
   
