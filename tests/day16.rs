@@ -7,7 +7,7 @@ use std::io::prelude::*;
 use std::io::BufReader;
 
 #[test]
-fn check_cycle() {
+fn part_two_check_cycle() {
   let f = File::open("puzzles/16/input.txt").expect("file not found");
   let reader = BufReader::new(f);
   let steps: Vec<String> = reader

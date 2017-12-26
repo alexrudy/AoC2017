@@ -5,7 +5,7 @@ use std::io::Read;
 use aoc2017::puzzles::day18;
 
 #[test]
-fn test_part_one() {
+fn part_one() {
   let mut program = String::new();
   let mut f = File::open("puzzles/18/input.txt").expect("file not found");
   f.read_to_string(&mut program).expect("Read failure!");
@@ -13,7 +13,7 @@ fn test_part_one() {
 }
 
 #[test]
-fn test_part_two() {
+fn part_two() {
   let mut program = String::new();
   let mut f = File::open("puzzles/18/input.txt").expect("file not found");
   f.read_to_string(&mut program).expect("Read failure!");
