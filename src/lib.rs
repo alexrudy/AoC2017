@@ -2,6 +2,7 @@
 #![feature(test)]
 
 extern crate test;
+#[macro_use] extern crate failure;
 
 /// Tools for working with Hexagons
 mod hexagons;
