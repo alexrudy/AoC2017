@@ -139,27 +139,4 @@ mod tests {
       dance(&mut programs, &steps);
     });
   }
-
-  #[test]
-  fn check_cycle() {
-    let f = File::open("puzzles/16/input.txt").expect("file not found");
-    let reader = BufReader::new(f);
-    let steps: Vec<String> = reader
-      .split(',' as u8)
-      .map(|s| String::from_utf8(s.unwrap()).unwrap())
-      .collect();
-    let mut programs: Vec<char> = "abcdefghijklmnop".chars().collect();
-    let (offset, cycle) = dance_cycle(&mut programs, &steps);
-    programs = "abcdefghijklmnop".chars().collect();
-    for _i in 0..offset {
-      dance(&mut programs, &steps);
-    }
-    let or = dance_string(&programs);
-    for _i in 0..cycle {
-      dance(&mut programs, &steps);
-    }
-    assert_eq!(or, dance_string(&programs))
-  }
-
-
 }
