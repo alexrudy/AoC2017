@@ -6,22 +6,19 @@ use std::io::BufRead;
 fn main() {
   let stdin = io::stdin();
 
-  let particles = stdin
+  let particles: Vec<day20::Particle> = stdin
     .lock()
     .lines()
     .map(|line| day20::Particle::parse(&line.unwrap()).unwrap())
     .collect();
 
-  let (_n, pf) = day20::simulate(
-    particles,
-    Some(&|p: &[day20::Particle]| -> bool {
-      p.iter().all(|pi| pi.settled())
-    }),
-  ).nth(0)
+  let pid = day20::find_closest(particles.clone(), false);
+  println!("Particle {} will stay closest to the origin.", pid);
+
+  let (_n, ps) = day20::simulate(particles.clone(), None, true)
+    .skip(100)
+    .skip_while(|&(_i, ref ps)| ps.iter().all(|x| x.settled()))
+    .nth(100)
     .unwrap();
-  let (id, _pm) = pf.iter()
-    .enumerate()
-    .min_by_key(|&(_i, pi)| pi.distance())
-    .unwrap();
-  println!("Particle {} will stay closest to the origin.", id);
+  println!("{} Particles remain after stability is achieved.", ps.len());
 }

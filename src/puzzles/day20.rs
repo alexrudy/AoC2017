@@ -1,6 +1,10 @@
 use std::str;
+use std::collections::HashMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+use std::io;
+use std::io::Write;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Point {
   x: i32,
   y: i32,
@@ -76,6 +80,7 @@ pub struct ParticleSimulationIterator<'a> {
   particles: Vec<Particle>,
   step: usize,
   check: Option<&'a Fn(&[Particle]) -> bool>,
+  collisions: bool,
 }
 
 impl<'a> Iterator for ParticleSimulationIterator<'a> {
@@ -86,6 +91,17 @@ impl<'a> Iterator for ParticleSimulationIterator<'a> {
       for particle in self.particles.iter_mut() {
         particle.advance();
       }
+      if self.collisions {
+        let clen = self.particles.len();
+        self.particles = prune_collisions(&self.particles);
+        if clen != self.particles.len() {
+          print!("  {} particles remain", self.particles.len());
+          io::stdout().flush().unwrap();
+          print!("\r");
+          io::stdout().flush().unwrap();
+        }
+      }
+
       self.step += 1;
       if let Some(check) = self.check {
         if check(&self.particles) {
@@ -101,12 +117,29 @@ impl<'a> Iterator for ParticleSimulationIterator<'a> {
 pub fn simulate<'a>(
   particles: Vec<Particle>,
   check: Option<&'a Fn(&[Particle]) -> bool>,
+  collide: bool,
 ) -> ParticleSimulationIterator<'a> {
   ParticleSimulationIterator {
     particles: particles,
     step: 0,
     check: check,
+    collisions: collide,
   }
+}
+
+fn prune_collisions(particles: &[Particle]) -> Vec<Particle> {
+  let mut counter = HashMap::new();
+
+  for particle in particles.iter() {
+    let count = counter.entry(&particle.p).or_insert(0);
+    *count += 1;
+  }
+
+  particles
+    .iter()
+    .filter(|x| *counter.get(&x.p).unwrap() == 1)
+    .map(|x| *x)
+    .collect()
 }
 
 fn parse_vector(text: &str) -> ParseResult<(char, Point)> {
@@ -126,10 +159,11 @@ fn parse_vector(text: &str) -> ParseResult<(char, Point)> {
   Ok((kind, point))
 }
 
-pub fn find_closest(particles: Vec<Particle>) -> usize {
+pub fn find_closest(particles: Vec<Particle>, collide: bool) -> usize {
   let (_n, pf) = simulate(
     particles,
     Some(&|p: &[Particle]| -> bool { p.iter().all(|pi| pi.settled()) }),
+    collide,
   ).nth(0)
     .unwrap();
   let (id, _pm) = pf.iter()
@@ -170,6 +204,7 @@ mod test {
     let (n, pf) = simulate(
       ps.clone(),
       Some(&|p: &[Particle]| -> bool { p.iter().all(|pi| pi.settled()) }),
+      false,
     ).nth(0)
       .unwrap();
     let (id, _pm) = pf.iter()
@@ -178,6 +213,6 @@ mod test {
       .unwrap();
     assert_eq!(id, 0);
     assert_eq!(n, 5);
-    assert_eq!(find_closest(ps.clone()), 0)
+    assert_eq!(find_closest(ps.clone(), false), 0)
   }
 }
