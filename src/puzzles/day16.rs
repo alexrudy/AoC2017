@@ -6,7 +6,7 @@ pub fn dance_move(dancers: &mut [char], command: &str) {
     's' => dance_spin(dancers, command),
     'x' => dance_exchange(dancers, command),
     'p' => dance_partner(dancers, command),
-    _ => panic!("I don't know this command!")
+    _ => panic!("I don't know this command!"),
   }
 }
 
@@ -18,7 +18,9 @@ fn dance_spin(dancers: &mut [char], command: &str) {
 
 /// Perform the exchange move, switching two indicies.
 fn dance_exchange(dancers: &mut [char], command: &str) {
-  let mut moves = command[1..].split('/').map(|x| x.trim().parse::<usize>().unwrap());
+  let mut moves = command[1..]
+    .split('/')
+    .map(|x| x.trim().parse::<usize>().unwrap());
   let a = moves.next().unwrap();
   let b = moves.next().unwrap();
   dancers.swap(a, b);
@@ -26,12 +28,24 @@ fn dance_exchange(dancers: &mut [char], command: &str) {
 
 /// Perform the partner move, switching two labels.
 fn dance_partner(dancers: &mut [char], command: &str) {
-  let mut partners = command[1..].split('/').map(|x| x.trim().parse::<char>().unwrap());
+  let mut partners = command[1..]
+    .split('/')
+    .map(|x| x.trim().parse::<char>().unwrap());
   let a = partners.next().unwrap();
   let b = partners.next().unwrap();
-  
-  let ia = dancers.iter().enumerate().find(|&(_i, x)| { *x == a }).unwrap().0;
-  let ib = dancers.iter().enumerate().find(|&(_i, x)| { *x == b }).unwrap().0;
+
+  let ia = dancers
+    .iter()
+    .enumerate()
+    .find(|&(_i, x)| *x == a)
+    .unwrap()
+    .0;
+  let ib = dancers
+    .iter()
+    .enumerate()
+    .find(|&(_i, x)| *x == b)
+    .unwrap()
+    .0;
   dancers.swap(ia, ib);
 }
 
@@ -46,9 +60,9 @@ pub fn dance_string(dancers: &[char]) -> String {
 }
 
 pub fn dance_cycle(dancers: &mut [char], steps: &[String]) -> (usize, usize) {
-  let mut seen : HashMap<String, usize> = HashMap::new();
+  let mut seen: HashMap<String, usize> = HashMap::new();
   let mut dstring = dance_string(dancers);
-  
+
   for i in 0.. {
     seen.insert(dstring.clone(), i);
     dance(dancers, steps);
@@ -63,33 +77,39 @@ pub fn dance_cycle(dancers: &mut [char], steps: &[String]) -> (usize, usize) {
 
 #[cfg(test)]
 mod tests {
-  
+
   use super::*;
-  
+
   #[test]
   fn simple_dance() {
-    let mut programs : Vec<char> = "abcde".chars().collect();
-    let steps : Vec<String> = vec!["s1", "x3/4", "pe/b"].iter().map(|x| x.to_string()).collect();
+    let mut programs: Vec<char> = "abcde".chars().collect();
+    let steps: Vec<String> = vec!["s1", "x3/4", "pe/b"]
+      .iter()
+      .map(|x| x.to_string())
+      .collect();
     println!("Dancing...");
     println!(" ) {}", programs.iter().cloned().collect::<String>());
-    
+
     for (i, step) in steps.iter().enumerate() {
       dance_move(&mut programs, step);
       println!("{}) {}", i, programs.iter().cloned().collect::<String>());
     }
-    
+
     let s: String = programs.iter().cloned().collect();
     assert_eq!(&s, "baedc");
   }
-  
+
   #[test]
   fn find_cycle() {
-    let mut programs : Vec<char> = "abcde".chars().collect();
-    let steps : Vec<String> = vec!["s1", "x3/4", "pe/b"].iter().map(|x| x.to_string()).collect();
+    let mut programs: Vec<char> = "abcde".chars().collect();
+    let steps: Vec<String> = vec!["s1", "x3/4", "pe/b"]
+      .iter()
+      .map(|x| x.to_string())
+      .collect();
     let (offset, cycle) = dance_cycle(&mut programs, &steps);
     assert_eq!(offset, 0);
     assert_eq!(cycle, 4);
-    
+
     programs = "abcde".chars().collect();
     for _i in 0..offset {
       dance(&mut programs, &steps);
@@ -100,29 +120,35 @@ mod tests {
     }
     assert_eq!(or, dance_string(&programs))
   }
-  
+
   use test::Bencher;
   use std::fs::File;
   use std::io::prelude::*;
   use std::io::BufReader;
-  
+
   #[bench]
   fn bench_dance(b: &mut Bencher) {
-      let f = File::open("puzzles/16/input.txt").expect("file not found");
-      let reader = BufReader::new(f);
-      let steps : Vec<String> = reader.split(',' as u8).map(|s| String::from_utf8(s.unwrap()).unwrap()).collect();
-      let mut programs : Vec<char> = "abcdefghijklmnop".chars().collect();
-      b.iter(|| {
-        dance(&mut programs, &steps);
-      });
+    let f = File::open("puzzles/16/input.txt").expect("file not found");
+    let reader = BufReader::new(f);
+    let steps: Vec<String> = reader
+      .split(',' as u8)
+      .map(|s| String::from_utf8(s.unwrap()).unwrap())
+      .collect();
+    let mut programs: Vec<char> = "abcdefghijklmnop".chars().collect();
+    b.iter(|| {
+      dance(&mut programs, &steps);
+    });
   }
-  
+
   #[test]
   fn check_cycle() {
     let f = File::open("puzzles/16/input.txt").expect("file not found");
     let reader = BufReader::new(f);
-    let steps : Vec<String> = reader.split(',' as u8).map(|s| String::from_utf8(s.unwrap()).unwrap()).collect();
-    let mut programs : Vec<char> = "abcdefghijklmnop".chars().collect();
+    let steps: Vec<String> = reader
+      .split(',' as u8)
+      .map(|s| String::from_utf8(s.unwrap()).unwrap())
+      .collect();
+    let mut programs: Vec<char> = "abcdefghijklmnop".chars().collect();
     let (offset, cycle) = dance_cycle(&mut programs, &steps);
     programs = "abcdefghijklmnop".chars().collect();
     for _i in 0..offset {
@@ -134,6 +160,6 @@ mod tests {
     }
     assert_eq!(or, dance_string(&programs))
   }
-  
-  
+
+
 }

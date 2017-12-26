@@ -3,7 +3,7 @@ use std::iter::FromIterator;
 
 pub fn check_passphrase(passphrase: &str) -> bool {
   let mut words = HashSet::new();
-  
+
   for word in passphrase.split(char::is_whitespace) {
     let word = word.trim();
     if words.contains(&word) {
@@ -17,7 +17,7 @@ pub fn check_passphrase(passphrase: &str) -> bool {
 
 pub fn check_passphrase_anagrams(passphrase: &str) -> bool {
   let mut words = HashSet::new();
-  
+
   for word in passphrase.split(char::is_whitespace) {
     let mut chars: Vec<char> = word.trim().chars().collect();
     chars.sort_by(|a, b| b.cmp(a));
@@ -34,14 +34,14 @@ pub fn check_passphrase_anagrams(passphrase: &str) -> bool {
 #[cfg(test)]
 mod tests {
   use super::*;
-  
+
   #[test]
   fn passphrases_test() {
     assert!(check_passphrase("aa bb cc dd ee"));
     assert!(!check_passphrase("aa bb cc dd aa"));
     assert!(check_passphrase("aa bb cc dd aaa"));
   }
-  
+
   #[test]
   fn anagram_test() {
     assert!(check_passphrase_anagrams("abcde fghij"));
@@ -50,7 +50,5 @@ mod tests {
     assert!(check_passphrase_anagrams("a ab abc abd abf abj"));
     assert!(check_passphrase_anagrams("iiii oiii ooii oooi oooo"));
     assert!(!check_passphrase_anagrams("oiii ioii iioi iiio"));
-    
-    
   }
 }

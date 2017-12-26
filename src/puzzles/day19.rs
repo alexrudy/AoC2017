@@ -29,7 +29,6 @@ pub trait Traverseable {
 }
 
 impl Traverseable for NetworkMap {
-  
   fn start(&self) -> Option<Point> {
     for (point, _c) in self {
       if point.1 == 0 {
@@ -38,7 +37,7 @@ impl Traverseable for NetworkMap {
     }
     None
   }
-  
+
   fn traverse<'a>(&'a self) -> NetworkPathIterator<'a> {
     NetworkPathIterator {
       position: self.start().expect("Can't locate the start of the graph!"),
@@ -47,7 +46,7 @@ impl Traverseable for NetworkMap {
       letters: false,
     }
   }
-  
+
   fn traverse_letters<'a>(&'a self) -> NetworkPathIterator<'a> {
     NetworkPathIterator {
       position: self.start().expect("Can't locate the start of the graph!"),
@@ -56,7 +55,6 @@ impl Traverseable for NetworkMap {
       letters: true,
     }
   }
-  
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Hash)]
@@ -125,16 +123,21 @@ impl<'a> NetworkPathIterator<'a> {
   fn nextstep(&mut self) -> Result<char, String> {
     let position = self.position;
     let nextposition = self.direction.progress(&position);
-    let nextitem = self.checkposition(&nextposition).map_or_else(|| {
-      self.direction = match self.direction.turn(&position, self.map) {
-        Ok(direction) => {direction},
-        Err(e) => {return Err(e);},
-      };
-      let nextposition = self.direction.progress(&position);
+    let nextitem = self.checkposition(&nextposition).map_or_else(
+      || {
+        self.direction = match self.direction.turn(&position, self.map) {
+          Ok(direction) => direction,
+          Err(e) => {
+            return Err(e);
+          }
+        };
+        let nextposition = self.direction.progress(&position);
         self
           .checkposition(&nextposition)
           .ok_or("No possible paths".to_string())
-      }, |x| {Ok(x)});
+      },
+      |x| Ok(x),
+    );
     nextitem
   }
 }
@@ -158,10 +161,10 @@ impl<'a> Iterator for NetworkPathIterator<'a> {
 
 #[cfg(test)]
 mod test {
-  
+
   use super::*;
   use std::io::BufRead;
-  
+
   #[test]
   fn parse_test() {
     let mapdata = "     |          
@@ -171,10 +174,10 @@ mod test {
      |  |  |  D 
      +B-+  +--+ 
 ";
-  let map = create_map(mapdata.as_bytes().lines());
-  assert_eq!(map.len(), 35);
+    let map = create_map(mapdata.as_bytes().lines());
+    assert_eq!(map.len(), 35);
   }
-  
+
   #[test]
   fn traverse_letters_test() {
     let mapdata = "     |          
@@ -185,10 +188,10 @@ mod test {
      +B-+  +--+ 
 ";
     let map = create_map(mapdata.as_bytes().lines());
-    let seen_letters : String = map.traverse_letters().collect();
+    let seen_letters: String = map.traverse_letters().collect();
     assert_eq!(&seen_letters, "ABCDEF")
   }
-  
+
   #[test]
   fn traverse_path_length_test() {
     let mapdata = "     |          
@@ -199,6 +202,6 @@ mod test {
      +B-+  +--+ 
 ";
     let map = create_map(mapdata.as_bytes().lines());
-    assert_eq!(map.traverse().count()+1, 38);
+    assert_eq!(map.traverse().count() + 1, 38);
   }
 }

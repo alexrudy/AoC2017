@@ -18,11 +18,13 @@ fn main() {
     let thismax = registers.hmap().values().max().unwrap().clone();
     maxval = match maxval {
       None => Some(thismax),
-      Some(v) => Some(cmp::max(thismax, v))
+      Some(v) => Some(cmp::max(thismax, v)),
     };
   }
   let largest_value = registers.hmap().values().max().unwrap();
   println!("The largest value in any register is {}", largest_value);
-  println!("The largest value ever to appear in any register is {}", maxval.unwrap());
-  
+  println!(
+    "The largest value ever to appear in any register is {}",
+    maxval.unwrap()
+  );
 }

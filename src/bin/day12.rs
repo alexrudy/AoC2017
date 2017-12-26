@@ -7,17 +7,20 @@ use std::collections::HashSet;
 
 fn main() {
   let stdlock = io::stdin();
-  let mut g : graph::Graph<day12::Town> = graph::Graph::new();
-  
+  let mut g: graph::Graph<day12::Town> = graph::Graph::new();
+
   for line in stdlock.lock().lines() {
     g.parse_node(&line.unwrap()).unwrap();
   }
-  
+
   let root = g.find_node("0").unwrap();
-  println!("Number of nodes connected to 0: {}", root.connected(&g).count());
-  
+  println!(
+    "Number of nodes connected to 0: {}",
+    root.connected(&g).count()
+  );
+
   let mut ngroups = 0;
-  let mut seen : HashSet<graph::Node> = HashSet::new();
+  let mut seen: HashSet<graph::Node> = HashSet::new();
   for node in g.iter() {
     if !seen.contains(&node) {
       ngroups += 1;
@@ -27,7 +30,6 @@ fn main() {
       }
     }
   }
-  
+
   println!("There are {} groups.", ngroups);
-  
 }

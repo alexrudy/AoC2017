@@ -6,9 +6,9 @@ use std::io::BufRead;
 
 fn main() {
   let stdin = io::stdin();
-  
+
   let map = day19::create_map(stdin.lock().lines());
-  let seen_letters : String = map.traverse_letters().collect();
+  let seen_letters: String = map.traverse_letters().collect();
   println!("Part 1: {}", seen_letters);
   println!("Part 2: {} steps", map.traverse().count() + 1);
 }
