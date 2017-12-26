@@ -1,8 +1,6 @@
 extern crate aoc2017;
 
 use std::fs::File;
-use std::io::BufReader;
-use std::io::BufRead;
 use std::io::Read;
 use aoc2017::puzzles::day18;
 

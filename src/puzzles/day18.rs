@@ -377,8 +377,6 @@ pub fn run_pair(program: &str) -> (usize, usize) {
 mod test {
 
   use super::*;
-  use std::fs::File;
-  use std::io::Read;
 
   #[test]
   fn test_parse_commands() {
