@@ -5,7 +5,6 @@ pub struct HexPoint {
   z: i32,
 }
 
-
 impl HexPoint {
   pub fn origin() -> HexPoint {
     HexPoint { x: 0, y: 0, z: 0 }

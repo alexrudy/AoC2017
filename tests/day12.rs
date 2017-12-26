@@ -25,7 +25,6 @@ fn part_two() {
   for line in input.lines() {
     g.parse_node(&line.unwrap()).unwrap();
   }
-  
+
   assert_eq!(g.count_groups(), 179);
-  
 }

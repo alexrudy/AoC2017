@@ -1,4 +1,3 @@
-
 extern crate aoc2017;
 use aoc2017::puzzles::day16;
 

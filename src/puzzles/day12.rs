@@ -46,7 +46,6 @@ impl graph::Graph<Town> {
   }
 }
 
-
 #[cfg(test)]
 mod tests {
 

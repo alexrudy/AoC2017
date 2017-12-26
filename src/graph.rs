@@ -225,7 +225,6 @@ impl<T> Graph<T> {
     ngroups
   }
 
-
   /// Finds the root node, but assumes all nodes are connected.
   pub fn root(&self) -> Option<Node> {
     self.first().and_then(|x| x.ancestors(self).last())

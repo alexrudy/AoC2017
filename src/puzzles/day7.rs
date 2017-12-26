@@ -24,7 +24,6 @@ impl graph::Graph<Program> {
       .ok_or(graph::GraphError::NodeParseError(text.to_string()))?
       .to_string();
 
-
     let weight = {
       let weight_text = parts
         .next()
@@ -246,6 +245,5 @@ mod tests {
     };
     assert_eq!(g.get_data(&node), &node_expected)
   }
-
 
 }

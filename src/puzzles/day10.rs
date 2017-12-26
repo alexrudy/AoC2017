@@ -15,7 +15,6 @@ pub fn part2(raw_input: &str) -> knot::Knot {
   knot::Knot::standard(&raw_input)
 }
 
-
 #[cfg(test)]
 mod test {
 

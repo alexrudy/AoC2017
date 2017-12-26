@@ -167,6 +167,7 @@ mod test {
 
   #[test]
   fn parse_test() {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     let mapdata = "     |          
      |  +--+    
      A  |  C    
@@ -180,6 +181,7 @@ mod test {
 
   #[test]
   fn traverse_letters_test() {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     let mapdata = "     |          
      |  +--+    
      A  |  C    
@@ -194,6 +196,7 @@ mod test {
 
   #[test]
   fn traverse_path_length_test() {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
     let mapdata = "     |          
      |  +--+    
      A  |  C    

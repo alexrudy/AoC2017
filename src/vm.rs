@@ -3,7 +3,6 @@
 use std::collections::HashMap;
 use std::str;
 
-
 // Registers key on String so that their keys
 // are not tied in lifetime to the arguments
 // which create the keys.
@@ -65,7 +64,6 @@ where
     }
   }
 }
-
 
 #[cfg(test)]
 mod test {

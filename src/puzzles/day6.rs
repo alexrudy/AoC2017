@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-
 fn reallocate_memory(memory_bank: &mut Vec<usize>) {
   let largest = memory_bank
     .iter()

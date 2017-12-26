@@ -1,8 +1,12 @@
 #![feature(slice_rotate)]
 #![feature(test)]
 
+#[doc(no_inline)]
 extern crate test;
-#[macro_use] extern crate failure;
+
+#[doc(no_inline)]
+#[macro_use]
+extern crate failure;
 
 /// Tools for working with Hexagons
 mod hexagons;

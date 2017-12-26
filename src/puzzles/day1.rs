@@ -37,7 +37,6 @@ pub fn parse_captcha(captcha: String, result: &mut Vec<u32>) {
 mod tests {
   use super::*;
 
-
   #[test]
   fn example_1() {
     let numbers = vec![1, 1, 2, 2];

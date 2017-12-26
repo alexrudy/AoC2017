@@ -186,7 +186,6 @@ impl Transmitter {
       Err(_) => Err("Queue was empty".to_string()),
     };
 
-
     match r {
       Ok(value) => {
         *nworking += 1;
@@ -194,7 +193,6 @@ impl Transmitter {
       }
       Err(_) => {}
     };
-
 
     while *nworking > 0 {
       match self.input.try_recv() {
@@ -362,7 +360,6 @@ pub fn run_pair(program: &str) -> (usize, usize) {
   let mut b = Transmitter::new(tb, ra, qsize.clone(), 1);
   b.execute(&Command::parse("set p 1")).unwrap();
   let pb = program.to_string();
-
 
   let ta = thread::spawn(move || run_unwatched_program(&pa, a).last().unwrap());
   let tb = thread::spawn(move || run_unwatched_program(&pb, b).last().unwrap());
