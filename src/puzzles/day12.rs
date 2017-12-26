@@ -84,18 +84,4 @@ mod tests {
     assert_eq!(root.connected(&g).count(), 6)
   }
 
-  #[test]
-  fn day12_puzzle() {
-    let input = include_bytes!("../../puzzles/12/input.txt");
-    let mut g: graph::Graph<Town> = graph::Graph::new();
-
-    for line in input.lines() {
-      g.parse_node(&line.unwrap()).unwrap();
-    }
-
-    let root = g.find_node("0").unwrap();
-    assert_eq!(root.connected(&g).count(), 169);
-    assert_eq!(g.count_groups(), 179);
-  }
-
 }
