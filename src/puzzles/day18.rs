@@ -430,22 +430,6 @@ jgz a -2";
   }
 
   #[test]
-  fn test_part_one() {
-    let mut program = String::new();
-    let mut f = File::open("puzzles/18/input.txt").expect("file not found");
-    f.read_to_string(&mut program).expect("Read failure!");
-    assert_eq!(run_program(&program).take(1).next(), Some(2951));
-  }
-
-  #[test]
-  fn test_part_two() {
-    let mut program = String::new();
-    let mut f = File::open("puzzles/18/input.txt").expect("file not found");
-    f.read_to_string(&mut program).expect("Read failure!");
-    assert_eq!(run_pair(&program).1, 7366);
-  }
-
-  #[test]
   fn test_pair_program() {
     let program = "snd 1
 snd 2
