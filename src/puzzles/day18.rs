@@ -29,8 +29,8 @@ where
     Q: Iterator<Item = &'a str>,
   {
     Arguments {
-      target: vm::Argument::parse(text.next().expect("Requires two arguments!")),
-      argument: vm::Argument::parse(text.next().expect("Requires two arguments!")),
+      target: text.next().expect("Requires 2 arguments, got 0").into(),
+      argument: text.next().expect("Requires 2 arguments, got 1").into(),
     }
   }
 }
@@ -51,16 +51,16 @@ impl<'a> Command<'a> {
   fn parse(text: &'a str) -> Command<'a> {
     let mut parts = text.split_whitespace();
     match parts.next().expect("Need to find a command!") {
-      "snd" => Command::Snd(vm::Argument::parse(
-        parts.next().expect("Requires one argument"),
-      )),
+      "snd" => Command::Snd(
+        parts.next().expect("Requires 1 argument").into(),
+      ),
       "set" => Command::Set(Arguments::parse(&mut parts)),
       "add" => Command::Add(Arguments::parse(&mut parts)),
       "mul" => Command::Mul(Arguments::parse(&mut parts)),
       "mod" => Command::Mod(Arguments::parse(&mut parts)),
-      "rcv" => Command::Rcv(vm::Argument::parse(
-        parts.next().expect("Requires one argument"),
-      )),
+      "rcv" => Command::Rcv(
+        parts.next().expect("Requires 1 argument").into(),
+      ),
       "jgz" => Command::Jgz(Arguments::parse(&mut parts)),
       _ => panic!("Can't understand command!"),
     }

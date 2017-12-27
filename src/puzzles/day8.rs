@@ -96,14 +96,14 @@ impl<'a> Instruction<'a> {
 
   pub fn parse(text: &str) -> Result<Instruction, io::Error> {
     let mut parts = text.split_whitespace();
-    let destination = vm::Argument::parse(parts.next().unwrap());
+    let destination = parts.next().unwrap().into();
     let command = Command::parse(parts.next().unwrap())?;
-    let value = vm::Argument::parse(parts.next().unwrap());
+    let value = parts.next().unwrap().into();
 
     let _ifstatement = parts.next().unwrap();
-    let left = vm::Argument::parse(parts.next().unwrap());
+    let left = parts.next().unwrap().into();
     let op = Operator::parse(parts.next().unwrap())?;
-    let right = vm::Argument::parse(parts.next().unwrap());
+    let right = parts.next().unwrap().into();
 
     Ok(Instruction {
       destination: destination,
@@ -121,16 +121,6 @@ mod test {
 
   use super::*;
   use std::io::BufRead;
-
-  #[test]
-  fn parse_arguments() {
-    // Arguments
-    let arg: vm::Argument<i32> = vm::Argument::parse("a");
-    assert_eq!(arg, vm::Argument::Register("a"));
-
-    let arg: vm::Argument<i32> = vm::Argument::parse("-10");
-    assert_eq!(arg, vm::Argument::Value(-10));
-  }
 
   #[test]
   fn parse_command() {

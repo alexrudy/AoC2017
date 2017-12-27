@@ -1,4 +1,5 @@
-/// Registers
+//! Virtual Machine infrastructure
+//! for use with advent of code 2017
 
 use std::collections::HashMap;
 use std::str;
@@ -15,23 +16,28 @@ where
   default: T,
 }
 
+/// Arguments contain either a value
+/// or a key for a register in the Registry.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Argument<'k, T>
 where
   T: Copy + Clone,
 {
+  /// The address of a register.
   Register(&'k str),
+  
+  /// A literal value.
   Value(T),
 }
 
-impl<'k, T> Argument<'k, T>
+impl<'k, T> From<&'k str> for Argument<'k, T>
 where
   T: str::FromStr + Copy + Clone,
 {
-  pub fn parse(text: &'k str) -> Argument<'k, T> {
-    match text.trim().parse::<T>() {
+  fn from(s: &'k str) -> Self {
+    match s.trim().parse::<T>() {
       Ok(value) => Argument::Value(value),
-      Err(_) => Argument::Register(text.trim()),
+      Err(_) => Argument::Register(s.trim()),
     }
   }
 }
@@ -72,17 +78,17 @@ mod test {
 
   #[test]
   fn test_parse_arguments() {
-    let arg: Argument<i32> = Argument::parse("a");
+    let arg: Argument<i32> = "a".into();
     assert_eq!(arg, Argument::Register("a"));
 
-    let arg: Argument<i32> = Argument::parse("-10");
+    let arg: Argument<i32> = "-10".into();
     assert_eq!(arg, Argument::Value(-10));
   }
 
   #[test]
   fn test_read_registry() {
     let registry: Registers<i32> = Registers::new(0);
-    let arg: Argument<i32> = Argument::parse("a");
+    let arg: Argument<i32> = "a".into();
     assert_eq!(registry.get(&arg), 0);
   }
 
@@ -99,8 +105,8 @@ mod test {
 
   #[test]
   fn increment_registry() {
-    let cond: Argument<i32> = Argument::parse("5");
-    let dest: Argument<i32> = Argument::parse("a");
+    let cond: Argument<i32> = "5".into();
+    let dest: Argument<i32> = "a".into();
     let mut registry: Registers<i32> = Registers::new(0);
     execute_command(&mut registry, &cond, &dest);
     assert_eq!(registry.get(&Argument::Register("a")), 1);
