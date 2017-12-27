@@ -127,7 +127,7 @@ impl Patch {
     cells.resize(size, row);
     Self { cells: cells }
   }
-  
+
   #[allow(dead_code)]
   fn from_coordinates(size: usize, values: &[(usize, usize, bool)]) -> Self {
     let mut patch = Self::new(size);
@@ -141,7 +141,7 @@ impl Patch {
     }
     patch
   }
-  
+
   #[allow(dead_code)]
   fn combine(patches: &[&Patch]) -> Self {
     let subpatch_side = patches[0].size();
@@ -200,7 +200,6 @@ impl Patch {
   // Join and split patterns
   #[allow(dead_code)]
   fn mutate(patches: &[&Patch]) -> Result<Vec<Self>> {
-
     let inpatch_size = patches[0].size();
     let num_inpatch_side = (patches.len() as f64).sqrt() as usize;
     let patch_size = num_inpatch_side * inpatch_size;
@@ -213,12 +212,11 @@ impl Patch {
     };
 
     let num_subpatch_side = patch_size / subpatch_size;
-    
-    
+
     let mut mutations = Vec::with_capacity(num_subpatch_side * num_subpatch_side);
     let subpatch = Patch::new(subpatch_size);
     mutations.resize(num_subpatch_side * num_subpatch_side, subpatch);
-    
+
     for (i, subpatch) in patches.iter().enumerate() {
       // Coordinates of this patch.
       let inpatch_sx = i % num_inpatch_side;
@@ -395,10 +393,10 @@ impl PatternSet {
   pub fn get(&self, pattern: &Patch) -> Option<&Patch> {
     self.patterns.get(pattern)
   }
-  
+
   /// Get a reference to the pattern matching the input pattern.
   /// This allows you to have a reference to the pattern owned
-  /// by this pattern set object, which should help with the lifetime. 
+  /// by this pattern set object, which should help with the lifetime.
   pub fn getkey(&self, pattern: &Patch) -> Option<&Patch> {
     self.patterns.keys().find(|x| x == &pattern)
   }
@@ -629,11 +627,9 @@ mod test {
       ".../.../..#".parse().unwrap(),
     ];
     let patches = raw_patches.iter().collect::<Vec<_>>();
-    b.iter(||{
-      Patch::mutate(&patches)
-    });
+    b.iter(|| Patch::mutate(&patches));
   }
-  
+
   #[bench]
   fn split_combine_bench(b: &mut Bencher) {
     let raw_patches = vec![
@@ -643,8 +639,6 @@ mod test {
       ".../.../..#".parse().unwrap(),
     ];
     let patches = raw_patches.iter().collect::<Vec<_>>();
-    b.iter(||{
-      Patch::combine(&patches).split().unwrap()
-    });
+    b.iter(|| Patch::combine(&patches).split().unwrap());
   }
 }

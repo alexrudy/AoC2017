@@ -11,7 +11,6 @@ pub struct Knot {
 }
 
 impl Knot {
-  
   /// Compute the knot hash once.
   fn once(&mut self, length: usize) {
     let split = length % self.hash.len();
@@ -24,20 +23,19 @@ impl Knot {
 
     self.offset += length + self.skip
   }
-  
-  
-  /// Extend the knot hash inputs with the 
+
+  /// Extend the knot hash inputs with the
   /// standard input extension, `[17, 31, 73, 47, 23]`
   fn extend(inputs: &mut Vec<u8>) {
     inputs.extend(vec![17, 31, 73, 47, 23]);
   }
-  
+
   /// Return the hash for this Knot,
   /// as an array of `u8` items.
   pub fn hash(&self) -> &[u8] {
     return &self.hash;
   }
-  
+
   /// The binary digest of this Knot
   /// in xor-d chuncks of 16 as binary digits.
   pub fn bindigest(&self) -> String {
@@ -68,7 +66,7 @@ impl Knot {
     let b = *diter.next().unwrap() as u32;
     a * b
   }
-  
+
   /// Compute a knot hash over a set number of rounds
   /// for a given input. Applies the knot hash to the
   /// current hash vector as set up in the constructor
@@ -86,7 +84,7 @@ impl Knot {
     let offrotate = (length as isize - (self.offset as isize % length as isize)).abs() as usize;
     self.hash.rotate(offrotate);
   }
-  
+
   /// Create a new Knot hash with a given size
   /// of the hash array for knotting.
   pub fn new(length: usize) -> Knot {
@@ -96,7 +94,7 @@ impl Knot {
       skip: 0,
     }
   }
-  
+
   /// Compute the standard knot hash over
   /// a string input. The string input is converted
   /// to bytes, then extended by the standard extension
