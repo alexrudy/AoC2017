@@ -14,5 +14,38 @@ fn load_infections() -> Result<day22::Cluster, day22::VirusError> {
 #[test]
 fn part_one() {
   let mut cluster = load_infections().unwrap();
-  assert_eq!(cluster.travel().take(10000).map(|x| x as usize).sum::<usize>(), 5240);
+  assert_eq!(
+    cluster
+      .travel()
+      .take(10000)
+      .map(|x| x as usize)
+      .sum::<usize>(),
+    5240
+  );
+}
+
+#[test]
+fn part_two_example() {
+  let mut cluster: day22::Cluster = "..#\n#..\n...".parse().unwrap();
+  assert_eq!(
+    cluster
+      .advnaced_travel()
+      .take(10000000)
+      .map(|x| x as usize)
+      .sum::<usize>(),
+    2511944
+  );
+}
+
+#[test]
+fn part_two() {
+  let mut cluster = load_infections().unwrap();
+  assert_eq!(
+    cluster
+      .advnaced_travel()
+      .take(10000000)
+      .map(|x| x as usize)
+      .sum::<usize>(),
+    2512144
+  );
 }
