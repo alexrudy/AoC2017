@@ -1,3 +1,9 @@
+//! An implementation of "Knot Hashing" for use with
+//! advent of code 2017. The primary struct in this
+//! module, `Knot`, should be used to handle knot hashing
+//! and produce digests.
+
+/// A knot hash
 pub struct Knot {
   hash: Vec<u8>,
   offset: usize,
@@ -5,6 +11,8 @@ pub struct Knot {
 }
 
 impl Knot {
+  
+  /// Compute the knot hash once.
   fn once(&mut self, length: usize) {
     let split = length % self.hash.len();
     {
@@ -16,15 +24,22 @@ impl Knot {
 
     self.offset += length + self.skip
   }
-
+  
+  
+  /// Extend the knot hash inputs with the 
+  /// standard input extension, `[17, 31, 73, 47, 23]`
   fn extend(inputs: &mut Vec<u8>) {
     inputs.extend(vec![17, 31, 73, 47, 23]);
   }
-
+  
+  /// Return the hash for this Knot,
+  /// as an array of `u8` items.
   pub fn hash(&self) -> &[u8] {
     return &self.hash;
   }
-
+  
+  /// The binary digest of this Knot
+  /// in xor-d chuncks of 16 as binary digits.
   pub fn bindigest(&self) -> String {
     self
       .hash
@@ -34,6 +49,8 @@ impl Knot {
       .collect()
   }
 
+  /// The hexadecimal digest of this Knot
+  /// in xor-d chuncks of 16 as hex.
   pub fn hexdigest(&self) -> String {
     self
       .hash
@@ -43,13 +60,19 @@ impl Knot {
       .collect()
   }
 
+  /// The simple-digest is the prodcut of the first
+  /// two numbers in the knot hash.
   pub fn simpledigest(&self) -> u32 {
     let mut diter = self.hash.iter().take(2);
     let a = *diter.next().unwrap() as u32;
     let b = *diter.next().unwrap() as u32;
     a * b
   }
-
+  
+  /// Compute a knot hash over a set number of rounds
+  /// for a given input. Applies the knot hash to the
+  /// current hash vector as set up in the constructor
+  /// for this Knot.
   pub fn compute(&mut self, inputs: &[usize], rounds: usize) {
     let length = self.hash.len();
 
@@ -63,7 +86,9 @@ impl Knot {
     let offrotate = (length as isize - (self.offset as isize % length as isize)).abs() as usize;
     self.hash.rotate(offrotate);
   }
-
+  
+  /// Create a new Knot hash with a given size
+  /// of the hash array for knotting.
   pub fn new(length: usize) -> Knot {
     Knot {
       hash: (0..length).map(|x| x as u8).collect(),
@@ -71,7 +96,12 @@ impl Knot {
       skip: 0,
     }
   }
-
+  
+  /// Compute the standard knot hash over
+  /// a string input. The string input is converted
+  /// to bytes, then extended by the standard extension
+  /// vector, then used as input to a Knot hash of length
+  /// 256, applied 64 times.
   pub fn standard(inputs: &str) -> Knot {
     // Prepare input
     let mut binputs: Vec<u8> = inputs.bytes().collect();
