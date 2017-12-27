@@ -51,16 +51,12 @@ impl<'a> Command<'a> {
   fn parse(text: &'a str) -> Command<'a> {
     let mut parts = text.split_whitespace();
     match parts.next().expect("Need to find a command!") {
-      "snd" => Command::Snd(
-        parts.next().expect("Requires 1 argument").into(),
-      ),
+      "snd" => Command::Snd(parts.next().expect("Requires 1 argument").into()),
       "set" => Command::Set(Arguments::parse(&mut parts)),
       "add" => Command::Add(Arguments::parse(&mut parts)),
       "mul" => Command::Mul(Arguments::parse(&mut parts)),
       "mod" => Command::Mod(Arguments::parse(&mut parts)),
-      "rcv" => Command::Rcv(
-        parts.next().expect("Requires 1 argument").into(),
-      ),
+      "rcv" => Command::Rcv(parts.next().expect("Requires 1 argument").into()),
       "jgz" => Command::Jgz(Arguments::parse(&mut parts)),
       _ => panic!("Can't understand command!"),
     }

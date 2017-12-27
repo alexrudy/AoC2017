@@ -25,7 +25,7 @@ where
 {
   /// The address of a register.
   Register(&'k str),
-  
+
   /// A literal value.
   Value(T),
 }

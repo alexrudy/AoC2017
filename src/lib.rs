@@ -1,4 +1,5 @@
 #![feature(slice_rotate)]
+#![feature(iterator_step_by)]
 #![feature(test)]
 
 #[doc(no_inline)]

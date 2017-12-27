@@ -1,0 +1,22 @@
+set b 93
+set c b
+if a != 0 {
+  mul b 100
+  sub b -100000
+  set c b
+  sub c -17000
+}
+for b in bi..c {
+  f = 1
+  for d in 2..b {
+    for e in 2..b {
+      if (d * e) == b {
+        f = 0
+      }
+    }
+  }
+  if f == 0 {
+    h += 1
+  }  
+  b += 17
+}
