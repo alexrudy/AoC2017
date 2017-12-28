@@ -175,7 +175,7 @@ mod test {
   #[test]
   fn connector_behavior() {
     let c: Connector = "4/0".parse().unwrap();
-    assert_eq!(c.iter().collect::<Vec<_>>(), vec![0, 4]);
+    assert_eq!(c.iter().collect::<Vec<_>>(), vec![4, 0]);
   }
   
   #[test]
@@ -183,7 +183,7 @@ mod test {
     let cs : Vec<Connector> = COMPONENTS.lines().map(|l| l.parse()).collect::<Result<_,_>>().unwrap();
     
     let b = bridges(&cs);
-    assert_eq!(b.count(), 16);
+    assert_eq!(b.count(), 7);
     
     let b = bridges(&cs);
     let strongest_bridge = b.max_by_key(|b| b.strength()).unwrap();
