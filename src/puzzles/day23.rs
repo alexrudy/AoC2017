@@ -140,6 +140,13 @@ impl<'a> Iterator for ProcessIteartor<'a> {
   }
 }
 
+pub fn decompiled_part_two(b: isize, c: isize) -> usize {
+  (b..(c + 1))
+    .step_by(17)
+    .map(|bi| (2..bi / 2).any(|d| bi % d == 0) as usize)
+    .sum()
+}
+
 #[cfg(test)]
 mod test {
 

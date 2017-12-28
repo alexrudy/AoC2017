@@ -35,14 +35,14 @@ fn main() {
     *cpu.registers.get_mut(&vm::Argument::Register("a")).unwrap() = 1;
     println!("Part 2:");
     cpu.run(&program).nth(6).unwrap();
-    println!("Registers after init: {:?}", cpu.registers.hmap());
-    
-    println!("h={}", 
-      part_two(cpu.registers.get(&vm::Argument::Register("b")), cpu.registers.get(&vm::Argument::Register("c"))));
-    
-  }
-}
+    println!(" Registers after init: {:?}", cpu.registers.hmap());
 
-fn part_two(b:isize, c:isize) -> usize {
-  (b..(c+1)).step_by(17).map(|bi| (2..bi/2).any(|d| bi % d == 0) as usize).sum()
+    println!(
+      " Register \"h\" at program end: {}",
+      day23::decompiled_part_two(
+        cpu.registers.get(&vm::Argument::Register("b")),
+        cpu.registers.get(&vm::Argument::Register("c"))
+      )
+    );
+  }
 }
