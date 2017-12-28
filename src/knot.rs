@@ -1,7 +1,7 @@
-//! An implementation of "Knot Hashing" for use with
-//! advent of code 2017. The primary struct in this
-//! module, `Knot`, should be used to handle knot hashing
-//! and produce digests.
+//! An implementation of "Knot Hashing" for use with advent of code 2017.
+//!
+//! The primary struct in this module, `Knot`, should be used to handle knot
+//! hashing and produce digests.
 
 /// A knot hash
 pub struct Knot {

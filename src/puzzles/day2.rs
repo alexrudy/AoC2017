@@ -152,7 +152,8 @@ pub fn checksum<T: io::BufRead>(lines: io::Lines<T>) -> Result<uint> {
   return Ok(checksum);
 }
 
-/// Completes both the original checksum and the even divides checksum on a series of rows.
+/// Completes both the original checksum and the even divides checksum on a
+/// series of rows.
 pub fn even_divides_and_checksum<T: io::BufRead>(lines: io::Lines<T>) -> Result<(uint, uint)> {
   let mut checksum = 0;
   let mut divides = 0;

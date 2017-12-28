@@ -9,8 +9,8 @@ type int = isize;
 
 type Progression = Result<isize, String>;
 
-/// A structure to hold pairs of arguments
-/// for commands which accept two arguments.
+/// A structure to hold pairs of arguments for commands which accept two
+/// arguments.
 #[derive(Debug, PartialEq, Eq, Clone)]
 struct Arguments<'a, T>
 where
@@ -204,7 +204,8 @@ impl Transmitter {
         }
       };
     }
-    // println!("{} Ending after deadlock: {} {}",self.ident, *nworking, self.sends());
+    // println!("{} Ending after deadlock: {} {}",self.ident, *nworking,
+    // self.sends());
     self.qsize.1.notify_all();
     Err(format!(
       "Deadlock Program:{} No workers remain.",
