@@ -12,17 +12,12 @@ use std::collections::HashSet;
 /// has a problem.
 #[derive(Fail, Debug)]
 pub enum GraphError {
-  
-  #[fail(display="Graph doesn't make sense.")]
-  GraphError,
-  
-  #[fail(display="Can't parse graph node: {}", _0)]
-  NodeParseError(String),
-  
-  #[fail(display="Can't parse integer.")]
-  GraphParseWeightError(#[cause] num::ParseIntError),
-}
+  #[fail(display = "Graph doesn't make sense.")] GraphError,
 
+  #[fail(display = "Can't parse graph node: {}", _0)] NodeParseError(String),
+
+  #[fail(display = "Can't parse integer.")] GraphParseWeightError(#[cause] num::ParseIntError),
+}
 
 /// A representation of a node,
 /// which does not reference it's parent
@@ -129,7 +124,6 @@ impl<'a, T> Iterator for NodeSearchIterator<'a, T> {
 }
 
 impl Node {
-  
   /// Append the given node to this node as child.
   pub fn append<T>(&self, node: &Node, graph: &mut Graph<T>) -> Result<(), GraphError> {
     {
@@ -142,7 +136,7 @@ impl Node {
     }
     Ok(())
   }
-  
+
   /// Add children to this node.
   pub fn add_children<T>(&self, children: &[Node], graph: &mut Graph<T>) -> Result<(), GraphError> {
     for node in children.iter() {
@@ -150,7 +144,7 @@ impl Node {
     }
     Ok(())
   }
-  
+
   /// Iterate over the ancestors of this graph.
   pub fn ancestors<T>(self, graph: &Graph<T>) -> Ancestors<T> {
     Ancestors {
@@ -158,7 +152,7 @@ impl Node {
       node: graph.nodes[self.index].parent,
     }
   }
-  
+
   /// Return a reference to the vector containing
   /// the direct children of this node.
   pub fn children<T>(self, graph: &Graph<T>) -> &Vec<Node> {
@@ -169,13 +163,12 @@ impl Node {
   pub fn parent<T>(self, graph: &Graph<T>) -> Option<Node> {
     graph.nodes[self.index].parent
   }
-  
+
   /// Iterate over all connected nodes to this node.
   pub fn connected<T>(self, graph: &Graph<T>) -> NodeSearchIterator<T> {
     NodeSearchIterator::new(self.index, graph)
   }
 }
-
 
 /// A group of possibly connected nodes.
 #[derive(Debug)]
@@ -184,12 +177,11 @@ pub struct Graph<T> {
 }
 
 impl<T> Graph<T> {
-  
   /// Make a new, empty graph.
   pub fn new() -> Graph<T> {
     Graph { nodes: Vec::new() }
   }
-  
+
   /// Get the data belonging to a given node.
   pub fn get_data(&self, node: &Node) -> &T {
     &self.nodes[node.index].data
@@ -203,7 +195,7 @@ impl<T> Graph<T> {
       None
     }
   }
-  
+
   /// Iterate over all nodes in the graph.
   pub fn iter(&self) -> NodeIterator<T> {
     NodeIterator {
@@ -211,12 +203,12 @@ impl<T> Graph<T> {
       index: 0,
     }
   }
-  
+
   /// Number of nodes in the graph.
   pub fn len(&self) -> usize {
     self.nodes.len()
   }
-  
+
   /// Number of groups in the graph.
   pub fn count_groups(&self) -> usize {
     let mut ngroups = 0;
@@ -237,7 +229,7 @@ impl<T> Graph<T> {
   pub fn root(&self) -> Option<Node> {
     self.first().and_then(|x| x.ancestors(self).last())
   }
-  
+
   /// Create a new node, with some data.
   pub fn node(&mut self, data: T) -> Node {
     let index = self.nodes.len();
