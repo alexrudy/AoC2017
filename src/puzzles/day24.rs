@@ -7,11 +7,10 @@ use std::collections::VecDeque;
 pub struct Connector(usize, usize);
 
 impl Connector {
-  
   fn new(a: usize, b: usize) -> Self {
     Connector(a, b)
   }
-  
+
   fn other(&self, pins: usize) -> usize {
     if pins == self.0 {
       self.1
@@ -19,26 +18,24 @@ impl Connector {
       self.0
     }
   }
-  
+
   fn iter(&self) -> ConnectorIterator {
     ConnectorIterator {
       connector: self,
-      position: 0
+      position: 0,
     }
   }
 }
 
 impl PartialEq for Connector {
   fn eq(&self, other: &Connector) -> bool {
-    self.0 == other.0 && self.1 == other.1 ||
-    self.0 == other.1 && self.1 == other.0
+    self.0 == other.0 && self.1 == other.1 || self.0 == other.1 && self.1 == other.0
   }
 }
 
 impl PartialEq<(usize, usize)> for Connector {
   fn eq(&self, other: &(usize, usize)) -> bool {
-    self.0 == other.0 && self.1 == other.1 ||
-    self.0 == other.1 && self.1 == other.0
+    self.0 == other.0 && self.1 == other.1 || self.0 == other.1 && self.1 == other.0
   }
 }
 
@@ -50,7 +47,7 @@ impl FromStr for Connector {
       .split('/')
       .map(|p| p.parse::<usize>())
       .collect::<Result<Vec<_>, _>>()?;
-    
+
     Ok(Connector(parts[0], parts[1]))
   }
 }
@@ -68,7 +65,7 @@ struct ConnectorIterator<'a> {
 
 impl<'a> Iterator for ConnectorIterator<'a> {
   type Item = usize;
-  
+
   fn next(&mut self) -> Option<usize> {
     let result = match self.position {
       0 => Some(self.connector.0),
@@ -82,16 +79,15 @@ impl<'a> Iterator for ConnectorIterator<'a> {
 
 pub trait Bridge {
   fn contains_connector(&self, connector: &Connector) -> bool;
-  
+
   fn strength(&self) -> usize;
 }
 
 impl Bridge for VecDeque<Connector> {
-  
   fn contains_connector(&self, connector: &Connector) -> bool {
     self.contains(&connector)
   }
-  
+
   fn strength(&self) -> usize {
     self.iter().map(|c| c.0 + c.1).sum()
   }
@@ -111,23 +107,21 @@ fn connector_mapping(connectors: &[Connector]) -> HashMap<usize, Vec<Connector>>
 pub fn bridges(connectors: &[Connector]) -> BridgeIterator {
   let mut bridges = VecDeque::new();
   bridges.push_front(VecDeque::new());
-  
+
   BridgeIterator {
-    bridges : bridges,
+    bridges: bridges,
     connectors: connector_mapping(connectors),
   }
 }
 
 pub struct BridgeIterator {
   bridges: VecDeque<VecDeque<Connector>>,
-  connectors : HashMap<usize, Vec<Connector>>
+  connectors: HashMap<usize, Vec<Connector>>,
 }
 
 impl Iterator for BridgeIterator {
-  
   type Item = VecDeque<Connector>;
-  
-  
+
   fn next(&mut self) -> Option<VecDeque<Connector>> {
     let mut bridge;
     loop {
@@ -142,11 +136,11 @@ impl Iterator for BridgeIterator {
           self.bridges.push_front(new_bridge);
         }
       }
-      
+
       // We didn't generate any more bridges, this must
       // be a terminal bridge, which we should yield.
       if n == self.bridges.len() {
-        break
+        break;
       }
     }
     Some(bridge)
@@ -157,7 +151,7 @@ impl Iterator for BridgeIterator {
 mod test {
 
   use super::*;
-  
+
   const COMPONENTS: &str = "0/2\n2/2\n2/3\n3/4\n3/5\n0/1\n10/1\n9/10";
 
   #[test]
@@ -171,31 +165,41 @@ mod test {
     let c: Connector = "52/20".parse().unwrap();
     assert_eq!(c, Connector(20, 52));
   }
-  
+
   #[test]
   fn connector_behavior() {
     let c: Connector = "4/0".parse().unwrap();
     assert_eq!(c.iter().collect::<Vec<_>>(), vec![4, 0]);
   }
-  
+
   #[test]
   fn iterate_bridges() {
-    let cs : Vec<Connector> = COMPONENTS.lines().map(|l| l.parse()).collect::<Result<_,_>>().unwrap();
-    
+    let cs: Vec<Connector> = COMPONENTS
+      .lines()
+      .map(|l| l.parse())
+      .collect::<Result<_, _>>()
+      .unwrap();
+
     let b = bridges(&cs);
     assert_eq!(b.count(), 7);
-    
+
     let b = bridges(&cs);
     let strongest_bridge = b.max_by_key(|b| b.strength()).unwrap();
     assert_eq!(strongest_bridge.strength(), 31);
     assert_eq!(strongest_bridge, vec![(0, 1), (1, 10), (10, 9)]);
   }
   use test::Bencher;
-  
+
   #[bench]
   fn iterate_bridges_bench(b: &mut Bencher) {
-    let cs : Vec<Connector> = COMPONENTS.lines().map(|l| l.parse()).collect::<Result<_,_>>().unwrap();
-    b.iter(|| {bridges(&cs).map(|b| b.strength()).max();});
+    let cs: Vec<Connector> = COMPONENTS
+      .lines()
+      .map(|l| l.parse())
+      .collect::<Result<_, _>>()
+      .unwrap();
+    b.iter(|| {
+      bridges(&cs).map(|b| b.strength()).max();
+    });
   }
 
 }
